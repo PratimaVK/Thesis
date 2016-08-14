@@ -1,0 +1,91 @@
+import mpi.aida.config.settings.PreparationSettings;
+import mpi.aida.preparator.Preparator;
+import mpi.aida.data.PreparedInput;
+import mpi.aida.config.settings.DisambiguationSettings;
+
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import org.apache.commons.io.IOUtils;
+
+import mpi.aida.Disambiguator;
+import mpi.aida.access.DataAccess;
+import mpi.aida.data.DisambiguationResults;
+import mpi.aida.data.Entities;
+import mpi.aida.data.EntityMetaData;
+import mpi.aida.data.KBIdentifiedEntity;
+import mpi.aida.util.htmloutput.ResultMention;
+import mpi.aida.data.ResultEntity;
+import mpi.aida.config.settings.preparation.StanfordHybridPreparationSettings;
+import mpi.aida.config.settings.disambiguation.CocktailPartyDisambiguationSettings;
+import mpi.aida.config.settings.disambiguation.FastCocktailPartyDisambiguationSettings;
+import mpi.aida.config.settings.disambiguation.FastLocalKeyphraseBasedDisambiguationSettings;
+import mpi.aida.config.settings.disambiguation.ImportanceOnlyDisambiguationSettings;
+import mpi.aida.config.settings.disambiguation.LocalKeyphraseBasedDisambiguationSettings;
+import mpi.aida.config.settings.disambiguation.PriorOnlyDisambiguationSettings;
+
+
+public class test_2 {
+
+	public static void main(String[] args) throws Exception  {
+		// Define the input.
+		//FileInputStream inputStream = new FileInputStream("D:/files_final_inputs/files/training-monolingual.tokenized.shuffled/news.txt");
+		//FileInputStream inputStream = new FileInputStream(args[0]);
+		//final OutputStream os = new FileOutputStream(args[1]);
+
+		FileInputStream inputStream = new FileInputStream("D:/try2.txt");
+		final OutputStream os = new FileOutputStream("D:/tryOutFast.txt");
+		final PrintStream printStream = new PrintStream(os);
+
+
+		try {
+		    String everything = IOUtils.toString(inputStream);
+		    PreparationSettings prepSettings = new StanfordHybridPreparationSettings();
+			Preparator p = new Preparator();
+			PreparedInput input = p.prepare(everything, prepSettings);
+
+			DisambiguationSettings disSettings = new CocktailPartyDisambiguationSettings();
+			//disSettings.setMaxEntityRank(0.15);
+			//disSettings.getSimilaritySettings().setMaxEntityKeyphraseCount(100);
+			// Below is new.
+			//disSettings.getCoherenceSimilaritySetting().setMaxEntityKeyphraseCount(100);
+
+			//DisambiguationSettings disSettings = new ImportanceOnlyDisambiguationSettings();
+			Disambiguator d = new Disambiguator(input, disSettings);
+			DisambiguationResults results = d.disambiguate();
+
+
+			// Print the disambiguation results.
+			Set<KBIdentifiedEntity> entities = new HashSet<KBIdentifiedEntity>();
+			for (mpi.aida.data.ResultMention rm : results.getResultMentions()) {
+			  entities.add(results.getBestEntity(rm).getKbEntity());
+			}
+
+			Map<KBIdentifiedEntity, EntityMetaData> entitiesMetaData =
+			  DataAccess.getEntitiesMetaData(entities);
+
+			for (mpi.aida.data.ResultMention rm : results.getResultMentions()) {
+			  KBIdentifiedEntity entity = results.getBestEntity(rm).getKbEntity();
+			  EntityMetaData entityMetaData = entitiesMetaData.get(entity);
+
+			  if (Entities.isOokbEntity(entity)) {
+			    //System.out.println("\t" + rm + "\t NO MATCHING ENTITY");
+			  } else {
+				  int l=rm.getCharacterLength()+rm.getCharacterOffset();
+				  printStream.print( rm.getCharacterOffset() + " " + l + " " + rm.getMention() + ":" + entity.getIdentifier() + "\r\n");
+			  }
+			}
+		} finally {
+		    inputStream.close();
+		    printStream.close();
+		    os.close();
+		}
+
+	}
+
+}
