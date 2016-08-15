@@ -1,0 +1,14 @@
+File aida-disambiguation- main file for disambiguating text to be used in AIDA. Output file contains 'character offset' 'mention' : 'entity'
+Files aida-part-1.py and aida-part-2.py are to replace each mention with mention:entity in the original text.
+
+File w2vAida.py contains the methods to handle tags.
+most_similar_new- for finding missing term
+n_similarity_new- relational similarity between two word pairs
+similarity_new- relational similarity between two words
+
+For each of the above methods, replace the delimiter ':' with '|' while using for sense2vec.
+
+File analogy_completion.py is for completion queries.It writes the word pairs along with the missing term and the relational similarity given by the model to a new file. Use this file to check the accuracy manually.
+
+File relational_similarity.py writes the relational similarity for each word pair to a new file. This file can then be used as input for the analogy ranking (analogy_ranking_final.py) and analogy confirmation (analogy_confirmation_final.py) queries.
+
